@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Costos 3D</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+    color: #333;
+    margin: 0 auto; max-width:1080px;
+    padding: 20px;
+    display: flex; justify-content: center;
+  }
+
+  .principal {
+    width: 1080px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+
+  .box {
+    padding: 15px;
+    border-radius: 10px;
+  }
+
+  .fijos { background: #d9d9d9; }
+  .pieza { background: #b6d7a8; }
+  .resultados { background: #d9ead3; }
+  .costo { background: #f4cccc; }
+  
+
+  input {
+    width: 100%;
+    padding: 6px;
+    margin-top: 3px;
+    border-radius: 5px;
+    border: 1px solid #bbb;
+    box-sizing: border-box;
+  }
+
+  label {
+    font-weight: bold;
+    display: block;
+    margin-top: 6px;
+  }
+
+  button {
+    grid-column: span 2;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #2e7d32;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .miniCalc input {
+    width: 90%;
+    margin-bottom: 8px;
+  }
+
+  .miniCalc button {
+    width: 45%;
+    margin: 3px;
+    padding: 10px;
+    background: #6d9eeb;
+    border-radius: 6px;
+    border:none;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="principal">
+  <div class="box fijos">
+    <h3>Gastos Fijos</h3>
+    <label>Precio KG ($)</label><input id="precioKG" type="number" step="0.01">
+    <label>Precio KWh ($)</label><input id="precioKwh" type="number" step="0.01">
+    <label>Consumo hora (W)</label><input id="consumoW" type="number" step="0.01">
+    <label>Desgaste máquina ($)</label><input id="desgaste" type="number" step="0.01">
+    <label>Repuestos ($)</label><input id="repuestos" type="number" step="0.01">
+    <label>% Margen de error</label><input id="errorFilamento" type="number" step="0.1">
+  </div>
+
+  <div class="box pieza">
+    <h3>Pieza</h3>
+    <label>Horas de impresión</label><input id="horas" type="number" step="0.1">
+    <label>Gramos</label><input id="gramos" type="number" step="0.01">
+    <label>Margen ganancia (x)</label><input id="margenGanancia" type="number" min="1" step="0.1">
+    <label>Extra ($)</label><input id="extra" type="number" step="0.01">
+  </div>
+
+  <button onclick="calcular()">Calcular</button>
+
+  <div class="box resultados">
+    <h3>Resultados</h3>
+    <div>Material: <span id="precioMaterial"></span></div>
+    <div>Luz: <span id="precioLuz"></span></div>
+    <div>Desgaste: <span id="precioDesgaste"></span></div>
+    <div>Error: <span id="precioError"></span></div>
+    <div>Extra: <span id="precioExtra"></span></div>
+  </div>
+
+  <div class="box costo">
+    <h3>Totales</h3>
+    <div>Costo: <span id="costo"></span></div>
+    <div>Total a Cobrar: <span id="totalCobrar"></span></div>
+    <div>Ganancia: <span id="ganancia"></span></div>
+  </div>
+</div>
+
+
+
+<script>
+function guardarDatos(){
+  document.querySelectorAll('input').forEach(i=>localStorage.setItem(i.id,i.value));
+}
+function cargarDatos(){
+  document.querySelectorAll('input').forEach(i=>{let v=localStorage.getItem(i.id); if(v!==null) i.value=v;});
+}
+
+function calcular(){
+  const g=v=>parseFloat(document.getElementById(v).value)||0;
+
+  const precioMaterial=(g('precioKG')/1000)*g('gramos')*(1+g('errorFilamento')/100);
+  const precioLuz=(g('consumoW')/1000)*g('precioKwh')*g('horas');
+  const precioDesgaste=g('desgaste')/100;
+  const precioError=precioMaterial*(g('errorFilamento')/100);
+
+  const costo=precioMaterial+precioLuz+precioDesgaste+(g('repuestos')/10000)+g('extra');
+  const total=costo*g('margenGanancia');
+
+  document.getElementById('precioMaterial').textContent='$'+precioMaterial.toFixed(2);
+  document.getElementById('precioLuz').textContent='$'+precioLuz.toFixed(2);
+  document.getElementById('precioDesgaste').textContent='$'+precioDesgaste.toFixed(2);
+  document.getElementById('precioError').textContent='$'+precioError.toFixed(2);
+  document.getElementById('precioExtra').textContent='$'+g('extra').toFixed(2);
+  document.getElementById('costo').textContent='$'+costo.toFixed(2);
+  document.getElementById('totalCobrar').textContent='$'+total.toFixed(2);
+  document.getElementById('ganancia').textContent='$'+(total-costo).toFixed(2);
+
+  guardarDatos();
+}
+
+let calcOperacion='';
+function calc(op){
+  const p=document.getElementById('calcPantalla');
+  if(op==='C'){ p.value=''; calcOperacion=''; return; }
+  if(op==='='){ p.value=eval(calcOperacion); calcOperacion=p.value; return; }
+  calcOperacion+=op;
+  p.value=calcOperacion;
+}
+
+cargarDatos(); calcular();
+</script>
+
+</body>
+</html>
+
